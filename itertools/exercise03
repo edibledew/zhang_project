@@ -1,0 +1,59 @@
+import pandas as pd
+import numpy as np
+import itertools
+
+data_file = "data_exercise03.csv"
+output_file = "exercise03_comb.csv"
+
+data = pd.read_csv(data_file)
+
+listS = list(set(data.columns[data.columns.str.startswith("S1_")].tolist() +
+                 data.columns[data.columns.str.startswith("S2_")].tolist()))
+listC = list(set(data.columns[data.columns.str.startswith("C1_")].tolist() +
+                 data.columns[data.columns.str.startswith("C2_")].tolist()))
+
+print("ListS:", listS)
+print("ListC:", listC)
+
+phase_combinations = [
+    {"Phase_Gas": 1, "Phase_Liquid": 0},
+    {"Phase_Gas": 0, "Phase_Liquid": 1}
+]
+
+additive_combinations = [
+    {col: int(i == idx) for idx, col in enumerate([
+        "Additive_C3H8O", "Additive_CH3CN", "Additive_H2SO4", "Additive_K2CO3",
+        "Additive_KHCO3", "Additive_Na2CO3", "Additive_NaHCO3", "Additive_NaOH", 
+        "Additive_None"
+    ])}
+    for i in range(9)
+]
+
+temperature = [round(x, 2) for x in np.linspace(293, 493, 6)]
+pressure = [1]
+mf_ratio = [0, 1, 30, 45, 95]
+c_temperature = [round(x, 2) for x in np.linspace(298, 1400, 6)]
+
+all_combinations = []
+
+for temp, pres, mf, c_temp, phase_comb, additive_comb, c, s in itertools.product(
+        temperature, pressure, mf_ratio, c_temperature, phase_combinations, additive_combinations, listC, listS):
+    combination = {
+        "C_comb": c,
+        "S_comb": s,
+        "Temperature": temp,
+        "Pressure": pres,
+        "Molar_Feed_Ratio": mf,
+        "Calc_Temperature": c_temp,
+        **phase_comb,
+        **additive_comb
+    }
+    all_combinations.append(combination)
+
+combinations_df = pd.DataFrame(all_combinations)
+
+print(f"Total number of combinations: {len(all_combinations)}")
+
+combinations_df.to_csv(output_file, index=False)
+
+print(f"Saved as {output_file}")
